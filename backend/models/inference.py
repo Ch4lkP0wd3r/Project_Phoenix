@@ -48,39 +48,43 @@ class DeepfakeDetector:
         Perform Error Level Analysis (ELA) on frames to detect compression inconsistencies.
         Returns a forensic score between 0 and 1.
         """
-        ela_scores = []
-        for frame in frames:
-            # Convert numpy array to PIL Image
-            original = Image.fromarray(frame.astype('uint8'), 'RGB')
-            
-            # Save as temporary JPG with specific quality
-            buffer = io.BytesIO()
-            original.save(buffer, format='JPEG', quality=90)
-            resaved = Image.open(buffer)
-            
-            # Calculate difference
-            diff = ImageChops.difference(original, resaved)
-            
-            # Get extreme values from the difference
-            extrema = diff.getextrema()
-            max_diff = max([ex[1] for ex in extrema])
-            if max_diff == 0:
-                max_diff = 1
-            
-            # Scale difference for analysis
-            scale = 255.0 / max_diff
-            diff = ImageChops.multiply(diff, scale)
-            
-            # Convert back to numpy and calculate average error level
-            diff_np = np.array(diff)
-            score = np.mean(diff_np) / 255.0
-            
-            # AI generated images often have lower/more uniform ELA noise than real photos
-            # but deepfakes often have higher discrepancies at edges.
-            # We normalize this into an 'authenticity' score.
-            ela_scores.append(1.0 - (score * 5)) # Simple heuristic: higher error = more likely manipulated
-            
-        return np.clip(np.mean(ela_scores), 0.1, 0.95)
+        try:
+            ela_scores = []
+            for frame in frames:
+                # Convert numpy array to PIL Image
+                original = Image.fromarray(frame.astype('uint8'), 'RGB')
+                
+                # Save as temporary JPG with specific quality
+                buffer = io.BytesIO()
+                original.save(buffer, format='JPEG', quality=90)
+                buffer.seek(0)
+                resaved = Image.open(buffer)
+                
+                # Calculate difference
+                diff = ImageChops.difference(original, resaved)
+                
+                # Get extreme values from the difference
+                extrema = diff.getextrema()
+                max_diff = max([ex[1] for ex in extrema])
+                if max_diff == 0:
+                    max_diff = 1
+                
+                # Scale difference for analysis
+                scale = 255.0 / max_diff
+                diff = diff.point(lambda i: i * scale)
+                
+                # Convert back to numpy and calculate average error level
+                diff_np = np.array(diff)
+                score = np.mean(diff_np) / 255.0
+                
+                ela_scores.append(1.0 - (score * 5))
+                
+            return np.clip(np.mean(ela_scores), 0.1, 0.95)
+        except Exception as e:
+            print(f"DEBUG: ELA failed: {e}")
+            import traceback
+            traceback.print_exc()
+            return 0.5
 
     def predict_visual(self, frames):
         """
