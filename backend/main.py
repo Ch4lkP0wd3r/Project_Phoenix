@@ -4,6 +4,7 @@ import os
 import shutil
 import uuid
 from datetime import datetime
+import numpy as np
 from sqlalchemy import create_engine, Column, String, Float, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
