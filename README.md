@@ -1,4 +1,4 @@
-# Project Phoenix: Deepfake Detection & Media Authenticity
+# Project Phoenix: Deepfake Detection & Media Authenticity (Under Development)
 
 Project Phoenix is a high-integrity AI platform designed for the detection of manipulated multimedia content, addressing the growing threat of deepfakes in legal and forensic contexts. 
 
